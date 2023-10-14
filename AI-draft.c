@@ -4,3 +4,7 @@ void main(){
 	
 	
 }
+
+void createInitState(){
+	
+}
