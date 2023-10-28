@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <unistd.h>
 
 
 struct Node{
@@ -11,6 +12,7 @@ struct Node{
 struct Fringe{
 	struct Node* nodeAddress;
 	struct Fringe* next;
+	int totalSearchCost;
 };
 
 struct closedList{
@@ -21,15 +23,21 @@ struct closedList{
 struct solution{
 	struct Node* nodeAddress;
 	struct solution* next;
+	int totalSearchCost;
 };
 
 int goalState[16] = {0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15};
-int initState[16] = {2,0,3,1,4,10,9,12,15,13,8,5,7,6,14,11};
+//{1,0,2,3,4,5,6,7,8,9,10,11,12,13,14,15};
+//{4,2,3,0,5,1,6,7,8,9,10,11,12,13,14,15};
+//{1,5,2,3,6,0,7,11,4,12,14,10,9,8,13,15};
+int initState[16] = {4,2,3,0,5,1,6,7,8,9,10,11,12,13,14,15};
 int possibleMoves[4];
 
 struct Fringe* head;
 struct closedList* headCl;
 struct solution* headSol;
+
+int totalSearchCost;
 
 
 
@@ -42,26 +50,26 @@ void swap(int *a, int *b){
 	
 }
 
-int moveUP(int state[], int loc){
+int moveUP(struct Node* root, int loc){
 	
-	swap(&state[loc], &state[loc-4]);	
+	swap(&root->state[loc], &root->state[loc-4]);	
 }
 
-int moveDOWN(int state[], int loc){
+int moveDOWN(struct Node* root, int loc){
 	
-	swap(&state[loc], &state[loc+4]);	
+	swap(&root->state[loc], &root->state[loc+4]);	
 	
 }
 
-int moveLEFT(int state[], int loc){
+int moveLEFT(struct Node* root, int loc){
 
-	swap(&state[loc], &state[loc-1]);
+	swap(&root->state[loc], &root->state[loc-1]);
 
 }
 
-int moveRIGHT(int state[], int loc){
+int moveRIGHT(struct Node* root, int loc){
 
-	swap(&state[loc], &state[loc+1]);
+	swap(&root->state[loc], &root->state[loc+1]);
 
 }
 
@@ -91,16 +99,16 @@ int validActions(int state[], int prevMove){
 		case 3: possibleMoves[2] = -1;
 				break;
 	}
-	if(loc-4 < 0){
+	if((loc-4)< 0){
 		possibleMoves[1] = -1;
 	}
-	if(loc+4>14){
+	if((loc+4)>15){
 		possibleMoves[0] = -1;
 	}
-	if(loc%4 == 0){
+	if((loc%4) == 0){
 		possibleMoves[3] = -1;
 	}
-	if(loc+1 % 4 == 0){
+	if(((loc+1) % 4) == 0){
 		possibleMoves[2] = -1;
 	}
 
@@ -115,6 +123,9 @@ struct Node* createNode(int state[], struct Node* parent, int moves){
 	int i, j;
 	struct Node* tempNode = (struct Node*)malloc(sizeof(struct Node));
 	
+	if(tempNode == NULL){
+		exit(1);
+	}
 	for(i=0; i<16; i++){
 		tempNode->state[i] = state[i];
 	}
@@ -127,6 +138,9 @@ void addFringe(struct Node* state){
 	
 	struct Fringe* ptr = (struct Fringe*)malloc(sizeof(struct Fringe));
 	
+	if(ptr == NULL){
+		exit(1);
+	}
 	if(head==NULL){
 		head = ptr;
 		ptr->nodeAddress = state;
@@ -148,9 +162,9 @@ void removeFromFringe(){
 		free(ptr);
 		head = NULL;
 	}else{
-	head = head->next;
-	ptr->next = NULL;
-	free(ptr);
+		head = ptr->next;
+		ptr->next = NULL;
+		free(ptr);
 	}
 	
 	
@@ -159,6 +173,11 @@ void addClosedList(struct Node* state){
 	
 	struct closedList* ptr = (struct closedList*)malloc(sizeof(struct closedList));
 	
+	totalSearchCost++;		//THE GOAL NODE IS ALSO ADDED HERE, -1 IF NECESSARY
+	
+	
+	if(ptr==NULL)
+		exit(1);
 	if(headCl==NULL){
 		headCl = ptr;
 		ptr->nodeAddress = state;
@@ -226,6 +245,8 @@ void resetClosedList(){
 	}
 }
 
+
+
 int checkDepth(){
 	int temp = 0;
 	struct closedList* ptr;
@@ -241,7 +262,6 @@ int checkDepth(){
 		ptr = prev;
 		prev = ptr->next;
 	}
-	printf("%d ", temp);
 	return temp;
 }
 
@@ -251,6 +271,9 @@ void printGoal(){
 	struct closedList* prev = ptr->next;
 	
 	struct solution* ptrSol = (struct solution*)malloc(sizeof(struct solution));
+	
+	if(ptrSol == NULL)
+		exit(1);
 	
 	ptrSol->nodeAddress = ptr->nodeAddress;
 	ptrSol->next = NULL;
@@ -276,48 +299,47 @@ int DFS(struct Node* state, int limit){
 	
 	addFringe(state);					//adds the root to the fringe
 	int move = 0;
-	int i=0,j, index=0, fringeIndex = 0, loc;
-	struct Node* root;
+	int i=0,j, index=0, fringeIndex = 0, loc=0;
+	struct Node* root = NULL;
 
 	while(head!=NULL){
 		state = head->nodeAddress;				//gets the head of the fringe
-		for(i=0; i<16; i++){
-			printf("%d->", state->state[i]);
-		}
-		printf("\n");
-		removeFromFringe();
 		
 		if(checkGoal(state) == 0){
 			addClosedList(state);
 			printGoal();
+			resetClosedList();
 			return 1;
 		}	
 		
+		removeFromFringe();
+		
+		
 		if(checkClosedList(state) == 0){		//checks if the state is already in the closed list			
 			addClosedList(state);
+			
 			if(checkDepth()<limit){
 				loc = validActions(state->state, state->moves);
 				for(j = 0; j<4; j++){
 					if(possibleMoves[j] == 0){
-						root = createNode(state->state, state, j);;
+						root = createNode(state->state, state, j);
 						switch(j){
-							case 0: moveDOWN(root->state, loc);
+							case 0: moveDOWN(root, loc);
 									break;
-							case 1: moveUP(root->state, loc);
+							case 1: moveUP(root, loc);
 									break;
-							case 2: moveRIGHT(root->state, loc);
+							case 2: moveRIGHT(root, loc);
 									break;
-							case 3: moveLEFT(root->state, loc);
+							case 3: moveLEFT(root, loc);
 									break;	
 						}
 						addFringe(root);
 					}
 				}
 			}
-		}
-		
+		}	
 	}
-	free(root);
+	
 	resetClosedList();
 	return 0;
 	
@@ -327,56 +349,70 @@ void iterativeDeepeningSearch(){
 	struct Node* root = createNode(initState, NULL, -1);
 	int limit = 0;
 	int i, j, col=0;
-	int totalNodesExp = 0;
 	int counter = 1;
 
 	while(counter){
 		if(limit==0){
 			createNode(initState, NULL, -1);
 			//checkGoal();
-			totalNodesExp++;
 			limit++;
 		}else{
 			root = createNode(initState, NULL, -1);
 			
 			while(DFS(root, limit)!=1){
+				totalSearchCost = 
 				limit++;
 			}
+			
 			counter=0;
-			return;
 		}
+		
 	}
+	return;
 	
 }
 void main(){
-		
-	int closedList[3];
-	int fringe[100];
-	
+
 	iterativeDeepeningSearch();
 	int i,j;
+	int solCost = 0, searchCost = 0;
 
 	struct closedList* ptr;
 	ptr = headCl;	
-	printf("CLOSED LIST HERE!\n");
-	while(ptr!=NULL){
-		for(i=0; i<16; i++){
-			printf("%d->", ptr->nodeAddress->state[i]);
-		}
-		printf("\n\n");
-		ptr = ptr->next;
-	}
 	
 	struct solution* ptr1;
 	ptr1 = headSol;
 	printf("solution HERE!\n");
+	
 	while(ptr1!=NULL){
+		
+		system("cls");
+		//system("clear"); for linux
+		printf("\t\t");
 		for(i=0; i<16; i++){
-			printf("%d->", ptr1->nodeAddress->state[i]);
+			if((i)%4 == 0 && i!=0)
+				printf("\n\t\t");
+			printf("%d ", ptr1->nodeAddress->state[i]);
+		}
+		switch(ptr1->nodeAddress->moves){
+			case 0: printf("\nMove down\n\n");
+					break;
+			case 1: printf("\nMove up\n\n");
+					break;
+			case 2: printf("\nMove right\n\n");
+					break;
+			case 3: printf("\nMove left\n\n");
+					break;
 		}
 		printf("\n\n");
+		solCost++;
 		ptr1 = ptr1->next;
+		sleep(1);  // Sleep for 1 second
+
 	}
+	
+	printf("Solution cost: %d\n", solCost);
+	printf("Search cost: %d\n", totalSearchCost);
 	
 	
 }
