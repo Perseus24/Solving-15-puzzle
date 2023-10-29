@@ -41,7 +41,7 @@ int totalSearchCost;
 
 
 
-void swap(int *a, int *b){
+void swap(int *a, int *b){	
 	int temp;
 	
 	temp = *a;
@@ -50,7 +50,7 @@ void swap(int *a, int *b){
 	
 }
 
-int moveUP(struct Node* root, int loc){
+int moveUP(struct Node* root, int loc){				
 	
 	swap(&root->state[loc], &root->state[loc-4]);	
 }
@@ -73,12 +73,12 @@ int moveRIGHT(struct Node* root, int loc){
 
 }
 
-int validActions(int state[], int prevMove){
+int validActions(int state[], int prevMove){			//calculates what actions are valid
 	
 	int loc = 0;
 	int i;
 
-	for(i=0; i<16; i++){
+	for(i=0; i<16; i++){				//finds the index of the blank space (zero)
 		if(state[i] == 0){
 			loc = i;
 			break;
@@ -89,7 +89,8 @@ int validActions(int state[], int prevMove){
 		possibleMoves[i] = 0;
 	}
 
-	switch(prevMove){
+	switch(prevMove){					//removes the inverse of the parent's move to the valid actions of the child's move
+								//e.g. UP for the parent's move, DOWN is no longer a valid action for the child
 		case 0: possibleMoves[1] = -1;
 				break;
 		case 1: possibleMoves[0] = -1;
@@ -99,7 +100,8 @@ int validActions(int state[], int prevMove){
 		case 3: possibleMoves[2] = -1;
 				break;
 	}
-	if((loc-4)< 0){
+					//also removes valid actions for the tiles or indexes that is impossible to move in a specific way
+	if((loc-4)< 0){				//such as all the bottom tiles cannot move DOWN
 		possibleMoves[1] = -1;
 	}
 	if((loc+4)>15){
@@ -118,8 +120,8 @@ int validActions(int state[], int prevMove){
 }
 
 
-struct Node* createNode(int state[], struct Node* parent, int moves){
-	
+struct Node* createNode(int state[], struct Node* parent, int moves){		//create node for the state
+			
 	int i, j;
 	struct Node* tempNode = (struct Node*)malloc(sizeof(struct Node));
 	
@@ -134,7 +136,7 @@ struct Node* createNode(int state[], struct Node* parent, int moves){
 	return tempNode;
 	
 }
-void addFringe(struct Node* state){
+void addFringe(struct Node* state){				//adds the node in front of the head
 	
 	struct Fringe* ptr = (struct Fringe*)malloc(sizeof(struct Fringe));
 	
@@ -169,7 +171,7 @@ void removeFromFringe(){
 	
 	
 }
-void addClosedList(struct Node* state){
+void addClosedList(struct Node* state){	
 	
 	struct closedList* ptr = (struct closedList*)malloc(sizeof(struct closedList));
 	
@@ -191,7 +193,7 @@ void addClosedList(struct Node* state){
 }
 
 
-int checkClosedList(struct Node* state){
+int checkClosedList(struct Node* state){		//checks if the state is already in the closed list
 	
 	if(head == NULL)
 		return 0;
@@ -201,9 +203,9 @@ int checkClosedList(struct Node* state){
 	
 	while(ptr!=NULL){
 		temp = 16;
-		for(i=0; i<16; i++){
+		for(i=0; i<16; i++){			//iterates through the state's index to compare to all the nodes' states
 			if(state->state[i] != ptr->nodeAddress->state[i]){
-				temp--;
+				temp--;					
 				break;
 			}
 		}
@@ -219,15 +221,15 @@ int checkClosedList(struct Node* state){
 int checkGoal(struct Node* state){
 	int i;
 	
-	for(i=0; i<16; i++){
+	for(i=0; i<16; i++){			//checks if the state is already a goal state
 		if(state->state[i] != goalState[i]){
-			return -1;
+			return -1;		//immediately returns -1 if one of the number is on the wrong tile
 		}
 	}
 	return 0;
 }
 
-void resetClosedList(){
+void resetClosedList(){				//removes all the nodes in the closed list
 	struct closedList* ptr;
 	
 	ptr = headCl;
@@ -247,7 +249,7 @@ void resetClosedList(){
 
 
 
-int checkDepth(){
+int checkDepth(){			//checks what depth the node is in through the closed list
 	int temp = 0;
 	struct closedList* ptr;
 	struct closedList* prev;
@@ -255,7 +257,7 @@ int checkDepth(){
 	prev = ptr->next;
 	
 	while(prev!=NULL){
-		while(prev->nodeAddress != ptr->nodeAddress->Parent){
+		while(prev->nodeAddress != ptr->nodeAddress->Parent){			//backtracks the number of edges from the node to the parent
 			prev=prev->next;
 		}
 		temp++;
@@ -265,7 +267,7 @@ int checkDepth(){
 	return temp;
 }
 
-void printGoal(){
+void printGoal(){			//copies the goal node and its parents to determine the solution from the closed list
 	
 	struct closedList* ptr = headCl;
 	struct closedList* prev = ptr->next;
@@ -302,7 +304,7 @@ int DFS(struct Node* state, int limit){
 	int i=0,j, index=0, fringeIndex = 0, loc=0;
 	struct Node* root = NULL;
 
-	while(head!=NULL){
+	while(head!=NULL){					//iterates until the fringe is empty
 		state = head->nodeAddress;				//gets the head of the fringe
 		
 		if(checkGoal(state) == 0){
@@ -312,13 +314,13 @@ int DFS(struct Node* state, int limit){
 			return 1;
 		}	
 		
-		removeFromFringe();
+		removeFromFringe();				//removes the head of the fringe
 		
 		
 		if(checkClosedList(state) == 0){		//checks if the state is already in the closed list			
 			addClosedList(state);
 			
-			if(checkDepth()<limit){
+			if(checkDepth()<limit){			//checks if the current node is in the limit. Otherwise, it would not be expanded
 				loc = validActions(state->state, state->moves);
 				for(j = 0; j<4; j++){
 					if(possibleMoves[j] == 0){
@@ -340,27 +342,25 @@ int DFS(struct Node* state, int limit){
 		}	
 	}
 	
-	resetClosedList();
+	resetClosedList();		//resets the closed list for every iteration of IDS when goal node is not found
 	return 0;
 	
 	
 }
 void iterativeDeepeningSearch(){
-	struct Node* root = createNode(initState, NULL, -1);
+	struct Node* root;
 	int limit = 0;
 	int i, j, col=0;
 	int counter = 1;
 
 	while(counter){
 		if(limit==0){
-			createNode(initState, NULL, -1);
-			//checkGoal();
+			root = createNode(initState, NULL, -1);
+			checkGoal(root);
 			limit++;
 		}else{
 			root = createNode(initState, NULL, -1);
-			
-			while(DFS(root, limit)!=1){
-				totalSearchCost = 
+			while(DFS(root, limit)!=1){		//enters a while loop and increases the limit until the goal node is found
 				limit++;
 			}
 			
