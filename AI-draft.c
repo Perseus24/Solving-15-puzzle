@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <time.h>
 
 
 struct Node{
@@ -11,7 +12,6 @@ struct Node{
 	int fn;
 	int gn;
 	struct Node* next;
-	
 };
 
 struct Fringe{
@@ -36,8 +36,7 @@ int goalState[16] = {0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15};
 //{1,5,2,3,6,0,7,11,4,12,14,10,9,8,13,15};
 //5,6,2,3,1,0,10,7,4,13,9,15,8,12,11,14};
 //{4,1,2,3,8,5,6,7,0,9,10,11,12,13,14,15};
-int initState[16] ={5,6,2,3,1,0,10,7,4,13,9,15,8,12,11,14};
-
+int initState[16] ={13,8,4,6,14,12,3,0,15,11,5,7,9,10,2,1};
 struct Node* headNode;
 struct Fringe* head;
 struct closedList* headCl;
@@ -146,7 +145,8 @@ struct Node* createNode(int state[], struct Node* parent, int moves, int depth, 
 }
 
 void addNode(struct Node* state){
-		
+	
+	totalSearchCost++;
 	if(headNode == NULL){
 		headNode = state;	
 		state->next = NULL;
@@ -200,7 +200,7 @@ void addClosedList(struct Node* state){
 	
 	struct closedList* ptr = (struct closedList*)malloc(sizeof(struct closedList));
 	
-	totalSearchCost++;		//THE GOAL NODE IS ALSO ADDED HERE, -1 IF NECESSARY
+	//totalSearchCost++;		//THE GOAL NODE IS ALSO ADDED HERE, -1 IF NECESSARY
 	
 	
 	if(ptr==NULL)
@@ -320,147 +320,7 @@ void printGoal(){
 	}
 
 }
-/*
-struct Node* DLS(struct Node* state, int limit){
-	
-	int counter = 0;
-	struct Node* root;
-	int loc, j;
-	int possibleMoves[4] = {0,0,0,0};
-	
-	if(checkGoal(state))
-		return state;
-		
-	else if(state->depth == limit){
-		if(state->next == NULL)
-			free(state);
-		else{
-			headNode = headNode->next;
-			state->next = NULL;
-			free(state);
-		}
-		return NULL;
-	}
-	else{
-		counter=0;
-		loc = validActions(state->state, state->moves, &possibleMoves);
-		for(j=0; j<4; j++){
-			//printf("%d\n", j);
-			if(possibleMoves[j] == 0){
-				printf("%d\n", j);
-				root = createNode(state->state, state, j, state->depth+1, 0, (state->depth)+1);
-				switch(j){
-					case 0: moveDOWN(root, loc);
-							break;
-					case 1: moveUP(root, loc);
-							break;
-					case 2: moveRIGHT(root, loc);
-							break;
-					case 3: moveLEFT(root, loc);
-							break;	
-				}
-				addNode(root);
-				struct Node* result = DLS(root, limit);
-	            if (result != NULL) {
-	    	        return result;
-	            }
-	            else{
-	              	counter=1;
-	            }
-	                
-			}
-		}
-		if(counter == 1){
-				
-			if(state->next == NULL){
-				free(state);
-			}
-			else{
-				headNode = headNode->next;
-				state->next = NULL;
-				free(state);
-			}
-			return NULL;
-		}
-	}
-		
-		
-}
-	
 
-/*
-int DLS(struct Node* state, int limit){
-		int loc, j, result = 0;
-		int cutoff = 0;
-		struct Node* root;
-		
-		
-		
-		//state = head->nodeAddress;
-		
-		if(checkGoal(state)){
-			return 1;
-		}
-		else if(state->depth == limit){
-			removeFromFringe();
-			return 0;
-		}
-		else{
-	  
-			loc = validActions(state->state, state->moves);
-			for(j=0; j<4; j++){
-				 
-				if(possibleMoves[j] == 0){
-					root = createNode(state->state, state, j, (state->depth)+1);
-					switch(j){
-						case 0: moveDOWN(root, loc);
-								break;
-						case 1: moveUP(root, loc);
-								break;
-						case 2: moveRIGHT(root, loc);
-								break;
-						case 3: moveLEFT(root, loc);
-								break;	
-					}
-					
-					addFringe(root);
-					result = DLS(root, limit);
-	                if (result == 1) {
-	                    return 1;
-	                }
-	                
-				}
-			}
-			removeFromFringe();
-			
-			return 0;
-		}
-		
-	}
-*/
-/*
-void iterativeDeepeningSearch(){
-	int limit = 0;
-	int counter = 1;
-	struct Node* result;
-	
-	while(counter){
-		struct Node* root = createNode(initState, NULL, -1, 0, 0, 0);
-		addNode(root);
-		printf("depth %d: \n\n", limit);
-		result = DLS(root, limit);
-
-		if(result!=NULL)
-			counter = 0;
-		else{
-			headNode = NULL;
-			limit++;
-		}
-		
-	}
-	
-}
-*/
 
 int manhattanDist(int state[]){
 	
@@ -490,9 +350,7 @@ int manhattanDist(int state[]){
 				}else if(tempArr[i][j] == temp){
 					goalI = (temp)/4;
 					goalJ = temp%4;
-					//printf("i is %d and j is %d and temp is %d\n", goalI, goalJ, temp);
 					manhattanScore = manhattanScore + abs(goalI - i) + abs(goalJ - j);
-					//printf("%d\n", manhattanScore);
 					counter = 1;
 					break;
 					
@@ -507,55 +365,6 @@ int manhattanDist(int state[]){
 	
 }
 
-void sortOpen(){
-	struct Fringe* prev_i;
-	struct Fringe* ptr;
-	struct Fringe* i;
-	struct Fringe* j;
-	int swap = 1;
-	
-	i = head;
-	prev_i = i;
-	j = i->next; 
-	
-	if(head->next == NULL)
-		return;
-		
-	else{
-		while(swap){
-			swap = 0;
-			i = head;
-			prev_i = head;
-			j = i->next; 
-			
-			while(j!=NULL){
-				if(i->nodeAddress->fn > j->nodeAddress->fn){
-					i->next = j->next;
-					j->next = i;
-					swap = 1;
-					if(i!=head){
-						prev_i->next = j;
-						j = i->next;
-					}
-					else{
-						head = j;
-						prev_i = j;
-						j = i->next;
-					}
-				}else{
-					prev_i = i;
-					i=j;
-					j=i->next;
-				}
-			}
-			
-			
-		}
-		
-		
-	}
-	
-}
 
 void addLists(struct Node* state, int change){
 	
@@ -812,13 +621,13 @@ int A_star(){
 	}		
 }
 
-struct Node* DLS(struct Node* state, int limit){
+int DLS(struct Node* state, int limit){
 	
 	int counter = 0;
 	struct Node* root;
 	int loc, j;
 	int possibleMoves[4] = {0,0,0,0};
-	
+	int result;
 	
 	/*
 	struct Node* ptr = headNode;
@@ -833,7 +642,7 @@ struct Node* DLS(struct Node* state, int limit){
 		printf("\n\n");
 	*/	
 	if(checkGoal(state))
-		return state;
+		return 1;
 		
 	else if(state->depth == limit){
 		if(state->next == NULL)
@@ -843,13 +652,12 @@ struct Node* DLS(struct Node* state, int limit){
 			state->next = NULL;
 			free(state);
 		}
-		return NULL;
+		return 0;
 	}
 	else{
 		counter=0;
 		loc = validActions(state->state, state->moves, possibleMoves);
 		for(j=0; j<4; j++){
-			//printf("%d\n", j);
 			if(possibleMoves[j] == 0){
 				root = createNode(state->state, state, j, (state->depth)+1, 0, 0);
 				switch(j){
@@ -863,9 +671,9 @@ struct Node* DLS(struct Node* state, int limit){
 							break;	
 				}
 				addNode(root);
-				struct Node* result = DLS(root, limit);
-	            if (result != NULL) {
-	    	        return result;
+				result = DLS(root, limit);
+	            if (result) {
+	    	        return 1;
 	            }
 	            else{
 	              	counter=1;
@@ -883,7 +691,7 @@ struct Node* DLS(struct Node* state, int limit){
 				state->next = NULL;
 				free(state);
 			}
-			return NULL;
+			return 0;
 		}
 	}
 		
@@ -893,7 +701,7 @@ struct Node* DLS(struct Node* state, int limit){
 void iterativeDeepeningSearch(){
 	int limit = 0;
 	int counter = 1;
-	struct Node* result;
+	int result;
 	
 	while(counter){
 		struct Node* root = createNode(initState, NULL, -1, 0, 0, 0);
@@ -901,7 +709,7 @@ void iterativeDeepeningSearch(){
 		printf("depth %d: \n\n", limit);
 		result = DLS(root, limit);
 
-		if(result!=NULL)
+		if(result)
 			counter = 0;
 		else{
 			headNode = NULL;
@@ -912,14 +720,56 @@ void iterativeDeepeningSearch(){
 	
 }
 
+void IDSsolution(){
+	
+	struct Node* temp = headNode;
+	
+	
+	while(temp!=NULL){
+		struct solution* ptr = (struct solution*)malloc(sizeof(struct solution));
+		if(headSol==NULL){
+			headSol = ptr;
+			ptr->nodeAddress = temp;
+			ptr->next = NULL;
+		}else{
+			ptr->nodeAddress = temp;
+			ptr->next = headSol;
+			headSol = ptr;
+		}
+		temp = temp->next;
+	}
+	
+	
+	
+}
+
+void addSolution(struct Node* state){
+	struct solution* ptr = (struct solution*)malloc(sizeof(struct solution));
+	if(headSol==NULL){
+		headSol = ptr;
+		ptr->nodeAddress = state;
+		ptr->next = NULL;
+	}else{
+		ptr->nodeAddress = state;
+		ptr->next = headSol;
+		headSol = ptr;
+	}
+}
+
 
 
 void main(){
 
 
 	//Below is the implementation of IDS	
+	clock_t start, end, start1, end1;
+	double cpu_time_used;
 	
+	start = clock();
 	iterativeDeepeningSearch();
+	end = clock();
+	
+	IDSsolution();
 	//A_star();
 	
 	int i, solCost = 0;
@@ -955,6 +805,8 @@ void main(){
 
 	}
 	
-		printf("Solution cost: %d\n", solCost);
-	printf("Search cost: %d\n", totalSearchCost);
+	printf("Solution cost: %d\n", solCost - 1);			//-1 as the cost also considers the goal Node
+	printf("Search cost: %d\n", totalSearchCost - 1);	//-1 as the cost also considers the goal Node
+	cpu_time_used = ((double) (end - start))/ CLOCKS_PER_SEC; 
+	printf("\t   %.10lf \t  ", cpu_time_used);
 }
