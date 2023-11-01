@@ -33,7 +33,8 @@ int goalState[16] = {0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15};
 //{1,5,2,3,6,0,7,11,4,12,14,10,9,8,13,15};
 //5,6,2,3,1,0,10,7,4,13,9,15,8,12,11,14};
 //{4,1,2,3,8,5,6,7,0,9,10,11,12,13,14,15};
-int initState[16] ={1,5,2,3,6,0,7,11,4,12,14,10,9,8,13,15};
+//{13,8,4,6,14,12,3,0,15,11,5,7,9,10,2,1};
+int initState[16] ={5,6,2,3,1,0,10,7,4,13,9,15,8,12,11,14};
 int possibleMoves[4];
 
 struct Node* headNode;
@@ -370,11 +371,10 @@ struct Node* DLS(struct Node* state, int limit){
 	}
 	else{
 		counter=0;
-		loc = validActions(state->state, state->moves, &possibleMoves);
+		loc = validActions(state->state, state->moves, possibleMoves);
 		for(j=0; j<4; j++){
 			//printf("%d\n", j);
 			if(possibleMoves[j] == 0){
-				printf("%d\n", j);
 				root = createNode(state->state, state, j, (state->depth)+1);
 				switch(j){
 					case 0: moveDOWN(root, loc);
@@ -543,7 +543,7 @@ void main(){
 	printf("Solution cost: %d\n", solCost - 1);			//-1 as it also considers the goal node
 	printf("Search cost: %d\n", totalSearchCost);
 	
-	
+	printf("head is depth %d", headNode->depth);
 	
 	//here for A*
 	
