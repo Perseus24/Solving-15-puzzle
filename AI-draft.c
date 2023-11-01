@@ -589,55 +589,63 @@ void addLists(struct Node* state, int change){
 
 }
 
-void removeLists(struct Node* state, int change){
-	
-	struct closedList* ptr = headCl;
-	struct closedList* prev = headCl;
-	
-	struct Fringe* ptr1 = head;
-	struct Fringe* prev1 = head;
-	
-	switch(change){
-		case 0: if(ptr == NULL)
-					return;
-	
-				while(ptr!=NULL){
-					if(ptr->next == NULL){
-						free(ptr);
-						return;
-					}
-					
-					while(ptr->nodeAddress!=state){
-						prev = ptr;
-						ptr = ptr->next;
-					}
-					prev->next = ptr->next;
-					free(ptr);
-					return;
-				}	
-				break;
-		case 1: if(ptr1 == NULL)
-					return;
-	
-				while(ptr1!=NULL){
-					if(ptr1->next == NULL){
-						free(ptr1);
-						return;
-					}
-					
-					while(ptr1->nodeAddress!=state){
-						prev1 = ptr1;
-						ptr1 = ptr1->next;
-					}
-					prev1->next = ptr1->next;
-					free(ptr1);
-					return;
-				}	
-				break;
-	}
-	
-	
+void removeLists(struct Node* state, int change) {
+    switch (change) {
+        case 0: {
+            struct closedList* ptr = headCl;
+            struct closedList* prev = NULL;
+            
+            if (ptr == NULL) {
+                return; // Nothing to remove.
+            }
+
+            // If the head is the target state.
+            if (ptr->nodeAddress == state) {
+                headCl = ptr->next;
+                free(ptr);
+                return;
+            }
+
+            while (ptr != NULL) {
+                if (ptr->nodeAddress == state) {
+                    prev->next = ptr->next;
+                    free(ptr);
+                    return;
+                }
+                prev = ptr;
+                ptr = ptr->next;
+            }
+            break;
+        }
+        case 1: {
+            struct Fringe* ptr1 = head;
+            struct Fringe* prev1 = NULL;
+            
+            if (ptr1 == NULL) {
+                return; // Nothing to remove.
+            }
+
+            // If the head is the target state.
+            if (ptr1->nodeAddress == state) {
+                head = ptr1->next;
+                free(ptr1);
+                return;
+            }
+
+            while (ptr1 != NULL) {
+                if (ptr1->nodeAddress == state) {
+                    prev1->next = ptr1->next;
+                    free(ptr1);
+                    return;
+                }
+                prev1 = ptr1;
+                ptr1 = ptr1->next;
+            }
+            break;
+        }
+    }
 }
+
 struct Node* checkLists(struct Node* state, int change){
 	
 	struct closedList* ptr = headCl;
@@ -684,12 +692,39 @@ struct Node* checkLists(struct Node* state, int change){
 	
 	
 }
+
+
+struct Node* getLowestFn() {
+    if (head == NULL) {
+        return NULL; // Return NULL if the list is empty.
+    }
+
+    struct Fringe* ptr = head;
+    int temp = head->nodeAddress->fn;
+    struct Node* state = head->nodeAddress;
+
+    if (head->next == NULL) {
+        return state;
+    }
+
+    ptr = ptr->next;
+    while (ptr != NULL) {
+        if (ptr->nodeAddress->fn < temp) {
+            state = ptr->nodeAddress;
+            temp = ptr->nodeAddress->fn;
+        }
+        ptr = ptr->next;
+    }
+
+	return state;
+}
+
 int A_star(){
 	
 	struct Node* state = createNode(initState, NULL, -1, 0, 0, 0);
 	state->fn =  manhattanDist(state->state);
-
-	addFringe(state);
+	addLists(state,1);
+	//addFringe(state);
 	
 	//struct Node* checkF = NULL;
 	//struct Node* checkC = NULL;
@@ -702,23 +737,29 @@ int A_star(){
 	
 	while(1){
 		
-		for(j=0; j<16; j++){
-			printf("%d->", head->nodeAddress->state[j]);
-		}printf("\n\n");
+		
 		//printf("%d\n", head->nodeAddress->depth);
 		if(head == NULL)
 			exit(1);
 		
-		sortOpen();
-		state = head->nodeAddress;				//gets the head of the fringe	
-		removeFromFringe();
+		//sortOpen();
+		state = getLowestFn();				//gets the head of the fringe	
+		for(j=0; j<16; j++){
+			printf("%d->", state->state[j]);
+		}printf("\n\n=>\n");
+		//removeLists(state, 1);
+		removeLists(state, 1);
+		//removeFromFringe();
+		//addFringe(state);
+		//removeFromFringe();
 		addLists(state, 0);			//adds to the closed list
 		
 		if(checkGoal(state)){
+			printf("hi");
 			addLists(state, 0);
 			printGoal();
 			resetClosedList();
-			exit(1);
+			//exit(1);
 			return 1;
 		}
 		
@@ -742,6 +783,7 @@ int A_star(){
 					if(root->fn < checkC->fn){
 						removeLists(checkC, 0);
 						addLists(checkC, 1);
+						addLists(root, 0);
 						//addClosed(root);
 					}		
 				}else{
@@ -758,9 +800,117 @@ int A_star(){
 				}
 			}
 		}
+		struct Fringe* ptr = head;
+		while(ptr!=NULL){
+			for(j=0; j<16; j++){
+				printf("%d->", ptr->nodeAddress->state[j]);
+			}printf("(%d)\n\n", ptr->nodeAddress->fn);
+			ptr = ptr->next;	
+		}
+		
+		printf("\n\n\n");
 	}		
 }
 
+struct Node* DLS(struct Node* state, int limit){
+	
+	int counter = 0;
+	struct Node* root;
+	int loc, j;
+	int possibleMoves[4] = {0,0,0,0};
+	
+	
+	/*
+	struct Node* ptr = headNode;
+		while(ptr!=NULL){
+			for(j=0; j<16; j++){
+				printf("%d->", ptr->state[j]);
+			}
+			printf("\ndepth is %d", ptr->depth);
+			ptr = ptr->next;
+			printf("\n\n");
+		}
+		printf("\n\n");
+	*/	
+	if(checkGoal(state))
+		return state;
+		
+	else if(state->depth == limit){
+		if(state->next == NULL)
+			free(state);
+		else{
+			headNode = headNode->next;
+			state->next = NULL;
+			free(state);
+		}
+		return NULL;
+	}
+	else{
+		counter=0;
+		loc = validActions(state->state, state->moves, possibleMoves);
+		for(j=0; j<4; j++){
+			//printf("%d\n", j);
+			if(possibleMoves[j] == 0){
+				root = createNode(state->state, state, j, (state->depth)+1, 0, 0);
+				switch(j){
+					case 0: moveDOWN(root, loc);
+							break;
+					case 1: moveUP(root, loc);
+							break;
+					case 2: moveRIGHT(root, loc);
+							break;
+					case 3: moveLEFT(root, loc);
+							break;	
+				}
+				addNode(root);
+				struct Node* result = DLS(root, limit);
+	            if (result != NULL) {
+	    	        return result;
+	            }
+	            else{
+	              	counter=1;
+	            }
+	                
+			}
+		}
+		if(counter == 1){
+				
+			if(state->next == NULL){
+				free(state);
+			}
+			else{
+				headNode = headNode->next;
+				state->next = NULL;
+				free(state);
+			}
+			return NULL;
+		}
+	}
+		
+		
+}
+
+void iterativeDeepeningSearch(){
+	int limit = 0;
+	int counter = 1;
+	struct Node* result;
+	
+	while(counter){
+		struct Node* root = createNode(initState, NULL, -1, 0, 0, 0);
+		addNode(root);
+		printf("depth %d: \n\n", limit);
+		result = DLS(root, limit);
+
+		if(result!=NULL)
+			counter = 0;
+		else{
+			headNode = NULL;
+			limit++;
+		}
+		
+	}
+	
+}
 
 
 
@@ -769,8 +919,8 @@ void main(){
 
 	//Below is the implementation of IDS	
 	
-	//iterativeDeepeningSearch();
-	A_star();
+	iterativeDeepeningSearch();
+	//A_star();
 	
 	int i, solCost = 0;
 	
