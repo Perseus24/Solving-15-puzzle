@@ -2,7 +2,7 @@
 
 The program was in partial fulfillment for our project in CS Elective - Artificial Intelligence
 
-##Contributors
+## Contributors
 Herrera, Cy Jay
 Tabug, Ignacio
 Cleofe, Erjay
