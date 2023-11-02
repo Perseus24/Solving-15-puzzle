@@ -3,7 +3,7 @@
 The program was in partial fulfillment for our project in CS Elective - Artificial Intelligence
 
 ## Contributors
-Herrera, Cy Jay
+\nHerrera, Cy Jay
 Tabug, Ignacio
 Cleofe, Erjay
 Deduque, Lean Jedfrey
